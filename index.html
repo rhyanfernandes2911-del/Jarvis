@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis AI</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #080d18;
+  color: #eaf6ff;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+header {
+  width: 100%;
+  padding: 22px;
+  text-align: center;
+  border-bottom: 1px solid #164c70;
+  color: #55d8ff;
+  letter-spacing: 3px;
+}
+.orb {
+  width: 145px;
+  height: 145px;
+  border: 2px solid #32caff;
+  border-radius: 50%;
+  margin: 35px auto 15px;
+  display: grid;
+  place-items: center;
+  font-size: 52px;
+  box-shadow: 0 0 35px #087eb955, inset 0 0 25px #087eb955;
+}
+h2 { text-align: center; }
+#status { color: #75c8e9; text-align: center; }
+main { width: 90%; max-width: 500px; }
+#chat {
+  height: 220px;
+  overflow-y: auto;
+  padding: 12px;
+  background: #101a2a;
+  border: 1px solid #214766;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+.msg { margin: 10px 0; line-height: 1.5; }
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #286181;
+  background: #101a2a;
+  color: white;
+  font-size: 16px;
+}
+.buttons { display: flex; gap: 10px; margin-top: 10px; }
+button {
+  padding: 13px;
+  border: 0;
+  border-radius: 10px;
+  background: #087fa8;
+  color: white;
+  font-weight: bold;
+  flex: 1;
+}
+footer { padding: 22px; color: #688ba5; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>J.A.R.V.I.S. · ASSISTENTE PESSOAL</header>
+<div class="orb">◉</div>
+<h2>Olá, estou aqui.</h2>
+<p id="status">Sistema inicializado</p>
+<main>
+  <div id="chat">
+    <div class="msg"><b>Jarvis:</b> Olá! Sou seu assistente pessoal. Como posso ajudar?</div>
+  </div>
+  <input id="mensagem" placeholder="Digite uma mensagem...">
+  <div class="buttons">
+    <button onclick="enviar()">Enviar</button>
+    <button onclick="ouvir()">🎙️ Falar</button>
+  </div>
+</main>
+<footer>JARVIS AI · PROTÓTIPO INICIAL</footer>
+<script>
+const chat = document.getElementById("chat");
+const statusEl = document.getElementById("status");
+
+function falar(texto) {
+  if ("speechSynthesis" in window) {
+    speechSynthesis.cancel();
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "pt-BR";
+    speechSynthesis.speak(voz);
+  }
+}
+
+function responder(texto) {
+  const t = texto.toLowerCase();
+  if (t.includes("olá") || t.includes("oi")) {
+    return "Olá! Que bom falar com você.";
+  }
+  if (t.includes("seu nome") || t.includes("quem é você")) {
+    return "Sou o Jarvis, seu assistente pessoal em desenvolvimento.";
+  }
+  if (t.includes("hora")) {
+    return "Agora são " + new Date().toLocaleTimeString("pt-BR",
+      {hour:"2-digit", minute:"2-digit"}) + ".";
+  }
+  if (t.includes("data") || t.includes("dia de hoje")) {
+    return "Hoje é " + new Date().toLocaleDateString("pt-BR") + ".";
+  }
+  if (t.includes("obrigado") || t.includes("obrigada")) {
+    return "Por nada! Estou aqui para ajudar.";
+  }
+  return "Ainda estou aprendendo. Nesta primeira versão, consigo responder a alguns comandos simples.";
+}
+
+function adicionar(remetente, texto) {
+  const div = document.createElement("div");
+  div.className = "msg";
+  const b = document.createElement("b");
+  b.textContent = remetente + ": ";
+  div.appendChild(b);
+  div.appendChild(document.createTextNode(texto));
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function enviar() {
+  const campo = document.getElementById("mensagem");
+  const texto = campo.value.trim();
+  if (!texto) return;
+  adicionar("Você", texto);
+  campo.value = "";
+  const resposta = responder(texto);
+  adicionar("Jarvis", resposta);
+  falar(resposta);
+}
+
+function ouvir() {
+  const Reconhecimento = window.SpeechRecognition ||
+                         window.webkitSpeechRecognition;
+  if (!Reconhecimento) {
+    statusEl.textContent = "Ditado por voz não disponível neste navegador.";
+    return;
+  }
+  const reconhecimento = new Reconhecimento();
+  reconhecimento.lang = "pt-BR";
+  reconhecimento.onstart = () => statusEl.textContent = "Estou ouvindo...";
+  reconhecimento.onresult = e => {
+    document.getElementById("mensagem").value =
+      e.results[0][0].transcript;
+    enviar();
+  };
+  reconhecimento.onerror = () => statusEl.textContent =
+    "Não consegui ouvir. Verifique a permissão do microfone.";
+  reconhecimento.onend = () => statusEl.textContent =
+    "Sistema inicializado";
+  reconhecimento.start();
+}
+
+document.getElementById("mensagem").addEventListener("keydown", e => {
+  if (e.key === "Enter") enviar();
+});
+</script>
+</body>
+</html>
